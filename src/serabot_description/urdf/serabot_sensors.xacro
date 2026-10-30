@@ -39,4 +39,38 @@
     </sensor>
   </gazebo>
 
+  <!-- ===== IMU: 100 Hz, gövde merkezinde (ağırlık merkezine yakın) ===== -->
+  <!-- Eğim ve dönüş takibi: açısal hız (jiroskop) ve doğrusal ivme (ivmeölçer) -->
+  <xacro:property name="gyro_noise"  value="0.0002"/>
+  <xacro:property name="accel_noise" value="0.017"/>
+
+  <xacro:macro name="imu_noise" params="stddev">
+    <noise type="gaussian">
+      <mean>0.0</mean>
+      <stddev>${stddev}</stddev>
+    </noise>
+  </xacro:macro>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu" type="imu">
+      <topic>imu</topic>
+      <gz_frame_id>imu_link</gz_frame_id>
+      <update_rate>100</update_rate>
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <imu>
+        <angular_velocity>
+          <x><xacro:imu_noise stddev="${gyro_noise}"/></x>
+          <y><xacro:imu_noise stddev="${gyro_noise}"/></y>
+          <z><xacro:imu_noise stddev="${gyro_noise}"/></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><xacro:imu_noise stddev="${accel_noise}"/></x>
+          <y><xacro:imu_noise stddev="${accel_noise}"/></y>
+          <z><xacro:imu_noise stddev="${accel_noise}"/></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
 </robot>
