@@ -229,4 +229,7 @@
   <!-- ===== Gazebo plugin'leri (yukarıdaki parametreleri kullanır) ===== -->
   <xacro:include filename="serabot_gazebo.xacro"/>
 
+  <!-- ===== Sensörler ===== -->
+  <xacro:include filename="serabot_sensors.xacro"/>
+
 </robot>
