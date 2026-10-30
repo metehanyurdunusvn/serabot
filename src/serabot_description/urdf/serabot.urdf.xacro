@@ -91,6 +91,12 @@
         <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="black"/>
       </visual>
+      <!-- Dış yüzdeki gri şerit: tekerleğin döndüğü gözle görülebilsin -->
+      <visual>
+        <origin xyz="0 ${y_sign*(wheel_width/2 + 0.001)} 0" rpy="0 0 0"/>
+        <geometry><box size="${1.6*wheel_radius} 0.002 0.015"/></geometry>
+        <material name="grey"/>
+      </visual>
       <collision>
         <origin xyz="0 0 0" rpy="${-pi/2} 0 0"/>
         <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
