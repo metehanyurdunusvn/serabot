@@ -226,4 +226,7 @@
     <origin xyz="${lamp_x} 0 ${body_height/2 + lamp_height/2}" rpy="0 0 0"/>
   </joint>
 
+  <!-- ===== Gazebo plugin'leri (yukarıdaki parametreleri kullanır) ===== -->
+  <xacro:include filename="serabot_gazebo.xacro"/>
+
 </robot>
