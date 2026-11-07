@@ -90,7 +90,7 @@ Tüm boyutlar `serabot.urdf.xacro` içinde `xacro:property` olarak tanımlıdır
 | `serabot_description/urdf/serabot.urdf.xacro` | Parametreler, link ve eklemler; diğer dosyaları include eder |
 | `serabot_description/urdf/inertial_macros.xacro` | Kutu, silindir ve küre için eylemsizlik makroları |
 | `serabot_description/urdf/serabot_gazebo.xacro` | Diff-drive ve joint state publisher plugin'leri, sürtünme ayarları |
-| `serabot_description/urdf/serabot_sensors.xacro` | LiDAR (`gpu_lidar`) ve IMU sensörleri |
+| `serabot_description/urdf/serabot_sensors.xacro` | LiDAR (`gpu_lidar`), IMU ve kamera sensörleri |
 
 ### 4.2 TF ağacı
 ```
@@ -105,6 +105,7 @@ odom                         (diff-drive plugin'i yayınlar)
         ├── lamp_link        (fixed)
         └── mast_link        (fixed)
             └── camera_link  (fixed, pitch 10°)
+                └── camera_optical_link (fixed, rpy -π/2 0 -π/2; görüntü frame'i)
 ```
 Rapor için TF ağacının PDF'i: `ros2 run tf2_tools view_frames`.
 
@@ -130,6 +131,8 @@ Rapor için TF ağacının PDF'i: `ros2 run tf2_tools view_frames`.
 |---|---|---|---|---|
 | `/scan` | `sensor_msgs/msg/LaserScan` | Gazebo → ROS | 10 Hz | `lidar_link` |
 | `/imu` | `sensor_msgs/msg/Imu` | Gazebo → ROS | 100 Hz | `imu_link` |
+| `/camera/image_raw` | `sensor_msgs/msg/Image` | Gazebo → ROS | 30 Hz | `camera_optical_link` |
+| `/camera/camera_info` | `sensor_msgs/msg/CameraInfo` | Gazebo → ROS | 30 Hz | `camera_optical_link` |
 | `/cmd_vel` | `geometry_msgs/msg/TwistStamped` | ROS → Gazebo | – | – |
 | `/odom` | `nav_msgs/msg/Odometry` | Gazebo → ROS | 30 Hz | `odom` → `base_footprint` |
 | `/tf` | `tf2_msgs/msg/TFMessage` | Gazebo → ROS | – | `odom` → `base_footprint` |
@@ -139,6 +142,7 @@ Rapor için TF ağacının PDF'i: `ros2 run tf2_tools view_frames`.
 **Sensör ayarları**
 - **LiDAR (`gpu_lidar`):** 360°, 360 örnek (1° çözünürlük), 10 Hz, menzil 0.12–10 m, Gauss gürültüsü σ = 0.01 m.
 - **IMU:** 100 Hz; jiroskop gürültüsü σ = 0.0002 rad/s, ivmeölçer gürültüsü σ = 0.017 m/s².
+- **Kamera:** 640×480, 30 Hz, R8G8B8, yatay görüş açısı 1.047 rad (60°), kırpma 0.05–15 m, Gauss gürültüsü σ = 0.007.
 
 **Neden `TwistStamped`:** Lyrical'daki TurtleBot3 simülasyonunun bridge yapılandırması da `/cmd_vel` için `TwistStamped` kullanıyor; projede aynı yaklaşım benimsendi. Bu yüzden teleop `-p stamped:=true` ile çalıştırılır.
 
