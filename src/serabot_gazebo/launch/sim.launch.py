@@ -24,6 +24,7 @@ def generate_launch_description():
     y = LaunchConfiguration('y')
     yaw = LaunchConfiguration('yaw')
     rviz = LaunchConfiguration('rviz')
+    behavior = LaunchConfiguration('behavior')
 
     declare_args = [
         DeclareLaunchArgument(
@@ -33,6 +34,9 @@ def generate_launch_description():
         DeclareLaunchArgument('y', default_value='0.7', description='Başlangıç y (m)'),
         DeclareLaunchArgument('yaw', default_value='0.0', description='Başlangıç yönü (rad)'),
         DeclareLaunchArgument('rviz', default_value='true', description='RViz açılsın mı'),
+        DeclareLaunchArgument(
+            'behavior', default_value='false',
+            description='Engelden kaçma düğümü (obstacle_avoider) başlatılsın mı'),
     ]
 
     # 1) Gazebo ve sera dünyası (-r: simülasyon oynatılarak başlar)
@@ -84,10 +88,20 @@ def generate_launch_description():
         output='screen',
     )
 
+    # 6) İsteğe bağlı: LiDAR ile engelden kaçma davranışı (/scan -> /cmd_vel)
+    obstacle_avoider = Node(
+        package='serabot_behavior',
+        executable='obstacle_avoider',
+        parameters=[{'use_sim_time': True}],
+        condition=IfCondition(behavior),
+        output='screen',
+    )
+
     return LaunchDescription(declare_args + [
         gazebo,
         robot_state_publisher,
         spawn,
         bridge,
         rviz_node,
+        obstacle_avoider,
     ])

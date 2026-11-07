@@ -25,6 +25,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'obstacle_avoider = serabot_behavior.obstacle_avoider:main',
         ],
     },
 )
