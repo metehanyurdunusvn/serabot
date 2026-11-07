@@ -203,6 +203,15 @@
     <origin xyz="${mast_radius + camera_size_x/2} 0 ${mast_height/2}" rpy="0 ${camera_pitch} 0"/>
   </joint>
 
+  <!-- Optik frame (REP 103): z ileri, x sağa, y aşağı. Görüntü mesajları bu frame'i kullanır -->
+  <link name="camera_optical_link"/>
+
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_optical_link"/>
+    <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+  </joint>
+
   <!-- ===== IMU (gövde merkezinde) ===== -->
   <link name="imu_link"/>
 

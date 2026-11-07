@@ -73,4 +73,35 @@
     </sensor>
   </gazebo>
 
+  <!-- ===== Kamera: 640x480, 30 Hz, direğin tepesinde (camera_link) ===== -->
+  <!-- Gazebo kamerası camera_link'in x eksenine bakar; mesajlar ise optik frame ile yayınlanır.
+       camera_info konusu açıkça camera/camera_info olarak verildi (bridge.yaml ile aynı). -->
+  <gazebo reference="camera_link">
+    <sensor name="camera" type="camera">
+      <topic>camera/image_raw</topic>
+      <gz_frame_id>camera_optical_link</gz_frame_id>
+      <update_rate>30</update_rate>
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+      <camera>
+        <camera_info_topic>camera/camera_info</camera_info_topic>
+        <horizontal_fov>1.047</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>15.0</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+    </sensor>
+  </gazebo>
+
 </robot>
