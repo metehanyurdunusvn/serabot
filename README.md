@@ -16,6 +16,7 @@ BIMU4101 – Introduction to Mobile Robotics, Midterm Project.
 | `serabot_description` | URDF/Xacro robot modeli, modeli RViz'de gösteren `display.launch.py` |
 | `serabot_gazebo` | Sera dünyası (`greenhouse.sdf`), `sim.launch.py`, `ros_gz_bridge` ayarları, RViz config |
 | `serabot_behavior` | Python davranış düğümleri |
+| `serabot_vision` | RGB camera red-target detection, LiDAR detours and safe stop controller |
 
 ## Kurulum
 
@@ -52,6 +53,46 @@ Sırasıyla Gazebo'yu sera dünyasıyla, `robot_state_publisher`'ı, robotun spa
 | `x`, `y`, `yaw` | `-4.0`, `0.7`, `0.0` | Başlangıç konumu ve yönü |
 | `rviz` | `true` | RViz açılsın mı |
 | `behavior` | `false` | Engelden kaçma düğümü (`obstacle_avoider`) başlatılsın mı |
+
+### Autonomous red-plant tracking (camera + LiDAR)
+
+Open Gazebo at the default start position in Terminal 1:
+
+```bash
+source /opt/ros/lyrical/setup.bash
+source ~/serabot/install/setup.bash
+ros2 launch serabot_gazebo sim.launch.py rviz:=false behavior:=false
+```
+
+In Terminal 2, with the same sourced ROS environment, start:
+
+```bash
+source /opt/ros/lyrical/setup.bash
+source ~/serabot/install/setup.bash
+ros2 run serabot_vision red_plant_tracker --ros-args -p use_sim_time:=true
+```
+
+The navigator detects the red plant in `/camera/image_raw` using HSV filtering,
+checks a body-width LiDAR collision corridor in `/scan`, makes short detours
+using `/odom`, and latches a zero-velocity stop near the visual target.
+Missing or stale sensor updates trigger a stop.
+
+**Warning:** Do not run vision tracker, obstacle avoider and teleop at once:
+all publish `/cmd_vel`. Keep `behavior:=false` for the vision demo.
+
+**Backup video:** [SeraBot_Demo_Backup.mp4](docs/evidence/SeraBot_Demo_Backup.mp4),
+2 min 14 sec with Gazebo top-down view, robot RGB camera and sensor evidence.
+[Evidence notes](docs/evidence/verification_notes.md).
+
+### Recent test results
+
+```bash
+colcon test --packages-select serabot_vision serabot_behavior
+colcon test-result --test-result-base build/serabot_vision --verbose
+colcon test-result --test-result-base build/serabot_behavior --verbose
+```
+
+Latest: 41 tests total, 0 failures, 0 errors, 1 skipped.
 
 ### Teleop ile sürüş
 `/cmd_vel` `geometry_msgs/msg/TwistStamped` tipindedir, bu yüzden `stamped:=true` gerekir:

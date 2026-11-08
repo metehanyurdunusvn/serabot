@@ -3,8 +3,7 @@
 **Workspace:** `/home/samet/serabot` under WSL Ubuntu 26.04.
 **Source boundary:** only new files within `src/serabot_vision/` changed during
 vision navigation development; original Metehan-owned sources are untouched.
-Project root remains locally ahead of GitHub by three earlier commits.
-No vision commit or push was made during this verification.
+Verification code and evidence were subsequently committed and pushed to GitHub.
 
 ## Components
 
@@ -30,9 +29,9 @@ colcon test-result --test-result-base build/serabot_vision --verbose
 colcon test-result --test-result-base build/serabot_behavior --verbose
 ```
 
-Result: `serabot_vision`: 20 tests, 0 failures, 0 errors, 0 skipped.
-`serabot_behavior`: 19 tests, 0 failures, 0 errors, 1 skipped.
-**Total: 39, 0 errors, 0 failures, 1 skipped.**
+Latest results (8 November): `serabot_vision`: 22 tests, 0 failures,
+0 errors, 0 skipped. `serabot_behavior`: 19 tests, 0 failures, 0 errors,
+1 skipped. **Total: 41, 0 failures, 0 errors, 1 skipped.**
 
 ## Gazebo observations
 
@@ -87,4 +86,15 @@ ros2 run serabot_vision red_plant_tracker --ros-args -p use_sim_time:=true
 Note that the stop is more conservative than the minimum 0.65m threshold
 in the successful run (approximately 0.82m observed). The result was
 verified in this greenhouse, not guaranteed for every obstacle arrangement.
-No complete Gazebo-window screenshot or video was recorded.
+On 8 November a successful new default-spawn run was captured as
+`SeraBot_Demo_Backup.mp4` with actual Gazebo top-down renders, camera images,
+/scan and /odom overlays, and separate IMU evidence. The video was accelerated
+for presentation; simulation sensor measurements were not altered. The final
+front range in this separate recorded trial was around 0.48m; 0.82m belongs
+to the separate 7 November baseline trial.
+
+Additional 8 November evidence: `imu_motion_log.csv`, `imu_sensor_evidence.png`,
+`topdown_start_2026_11_08.png`, `topdown_goal_2026_11_08.png`.
+
+The latest speed tuning used approach=0.20m/s, detour=0.22m/s,
+turn=0.60rad/s; obstacle and stop safety checks were retained.
