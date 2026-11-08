@@ -72,16 +72,36 @@ source ~/serabot/install/setup.bash
 ros2 run serabot_vision red_plant_tracker --ros-args -p use_sim_time:=true
 ```
 
-The navigator detects the red plant in `/camera/image_raw` using HSV filtering,
-checks a body-width LiDAR collision corridor in `/scan`, makes short detours
-using `/odom`, and latches a zero-velocity stop near the visual target.
-Missing or stale sensor updates trigger a stop.
+This default run first cruises 3.55m along the known clear greenhouse aisle
+using odometry and LiDAR safety checking. It then detects the red plant in
+`/camera/image_raw` with HSV filtering, turns proportionally toward the
+target, approaches while checking a body-width `/scan` corridor, and latches
+a zero-velocity stop. Missing or stale inputs cause a stop.
+
+**Separate obstacle-avoidance verification:** Start the same world with
+`x:=-1.6 y:=0.7 yaw:=0.0 rviz:=false behavior:=false`, then start the
+vision node with `-p aisle_cruise_distance:=0.0` after
+`-p use_sim_time:=true`. This disables the world-specific aisle segment
+and forces the tested reactive camera/LiDAR detour sequence. In the recorded
+trial the state order was
+`align_target -> approach_target -> avoid_turn -> avoid_drive ->
+align_target -> approach_target -> target_reached`.
+
+The aisle-first behavior is designed for this **known greenhouse layout**;
+it is not a SLAM or globally planned solution to arbitrary maps.
 
 **Warning:** Do not run vision tracker, obstacle avoider and teleop at once:
 all publish `/cmd_vel`. Keep `behavior:=false` for the vision demo.
 
-**Backup video:** [SeraBot_Demo_Backup.mp4](docs/evidence/SeraBot_Demo_Backup.mp4),
-2 min 14 sec with Gazebo top-down view, robot RGB camera and sensor evidence.
+**Current recommended presentation video:**
+[SeraBot_Demo_Final_2_Scenarios.mp4](docs/evidence/SeraBot_Demo_Final_2_Scenarios.mp4),
+2m10s. Two **separately recorded successful real Gazebo trials**:
+LiDAR obstacle bypass and default-spawn aisle-to-target navigation, with
+onboard RGB footage and unmodified ROS telemetry. Playback accelerated
+about 1.8x relative to wall-clock capture.
+
+Earlier [SeraBot_Demo_Backup.mp4](docs/evidence/SeraBot_Demo_Backup.mp4)
+remains available as a fallback.
 [Evidence notes](docs/evidence/verification_notes.md).
 
 ### Recent test results
@@ -92,7 +112,7 @@ colcon test-result --test-result-base build/serabot_vision --verbose
 colcon test-result --test-result-base build/serabot_behavior --verbose
 ```
 
-Latest: 41 tests total, 0 failures, 0 errors, 1 skipped.
+Latest: 44 tests total (25 vision, 19 behavior), 0 failures, 0 errors, 1 skipped.
 
 ### Teleop ile sürüş
 `/cmd_vel` `geometry_msgs/msg/TwistStamped` tipindedir, bu yüzden `stamped:=true` gerekir:

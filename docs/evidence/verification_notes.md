@@ -98,3 +98,48 @@ Additional 8 November evidence: `imu_motion_log.csv`, `imu_sensor_evidence.png`,
 
 The latest speed tuning used approach=0.20m/s, detour=0.22m/s,
 turn=0.60rad/s; obstacle and stop safety checks were retained.
+
+
+## 8 November: two-mode navigation improvement (verified)
+
+The previous reactive default-spawn demonstration required several turns
+around multiple pot rows. We retained camera/LiDAR reactive avoidance as
+a **separate test mode**, and updated the default demonstration to follow the
+known clear aisle for 3.55m under LiDAR collision checking before switching
+to proportional camera target alignment. This reduces repeated correction
+and makes the main mission easier to demonstrate. The aisle leg is based
+on a known map layout, NOT general SLAM or mapping.
+
+### A. Reactive obstacle detour (separate starting pose)
+
+* Spawn arguments: `x:=-1.6 y:=0.7 yaw:=0.0`
+* Navigator: `-p use_sim_time:=true -p aisle_cruise_distance:=0.0`
+* Observed sequence: `align_target -> approach_target -> avoid_turn
+  -> avoid_drive -> align_target -> approach_target -> target_reached`
+* Recorded final forward LiDAR range: about 0.805m
+* Final camera red width: 166px; zero linear/angular commanded velocity
+* Recorded native Gazebo screenshots and actual camera images:
+  `obstacle_detour_2026_11_08.csv` and `obstacle_scenario_preview.jpg`
+
+### B. Default-spawn known-aisle navigation
+
+* Spawn: `x:=-4.0 y:=0.7 yaw:=0.0`
+* Navigator default `aisle_cruise_distance=3.55m`
+* Observed sequence: `aisle_cruise -> align_target -> approach_target
+  -> target_reached` with no repeated avoidance turn loop.
+* Recorded final forward LiDAR range: about 0.820m
+* Final camera red width: 165px; zero linear/angular commanded velocity
+* Actual telemetry: `aisle_cruise_2026_11_08.csv`, preview
+  `aisle_scenario_preview.jpg`
+
+### New final presentation backup
+
+`SeraBot_Demo_Final_2_Scenarios.mp4` combines A and B as explicitly
+different runs, 130.33s / 1280x720 MP4. The recorded Gazebo/ROS data are
+real and unchanged, while video playback is accelerated about 1.8x
+relative to the captured wall clock. The previous demo video is retained.
+
+Final controller/test source is in the corresponding commit. The
+sensor-reading and stop safety principles are unchanged. The two-mode
+tests must not be presented as proof of general obstacle-free navigation
+in arbitrary greenhouses.

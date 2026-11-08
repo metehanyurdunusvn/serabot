@@ -13,7 +13,7 @@ from sensor_msgs.msg import Image, LaserScan
 
 from serabot_behavior.avoidance import STOP, is_stale
 from .red_detection import RedTarget, find_red_target
-from .tracking import Pose, VisionNavigator
+from .tracking import Pose, VisionNavigator, TrackingParams
 
 
 def yaw_from_quaternion(q) -> float:
@@ -25,7 +25,13 @@ class RedPlantTracker(Node):
     def __init__(self) -> None:
         super().__init__('red_plant_tracker')
         self.bridge = CvBridge()
-        self.navigator = VisionNavigator()
+        # The Gazebo greenhouse provides a clear central aisle from
+        # its default spawn; keep the robot there before visual approach.
+        # Pass -p aisle_cruise_distance:=0 to use generic reactive mode.
+        self.declare_parameter('aisle_cruise_distance', 3.55)
+        aisle = float(self.get_parameter('aisle_cruise_distance').value)
+        self.navigator = VisionNavigator(
+            tracking=TrackingParams(aisle_cruise_distance=max(0.0, aisle)))
         self.scan_timeout = 0.5
         self.camera_timeout = 0.8
         self.odom_timeout = 0.5

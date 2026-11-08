@@ -190,3 +190,30 @@ def test_faster_detour_respects_obstacle_stop():
     assert drive.linear == nav.tracking.detour_speed
     blocked = navstep(nav, scan(0.4), red, (0.1, 0.0, yaw))
     assert blocked.linear == 0 and blocked.state == AVOID_TURN
+
+
+def test_alignment_turn_slows_for_small_target_error():
+    close = act(scan(2.0), RedTarget(0.15, 600, 370, 240, 50))
+    far = act(scan(2.0), RedTarget(0.75, 600, 560, 240, 50))
+    assert close.state == ALIGN and far.state == ALIGN
+    assert close.linear == 0 and far.linear == 0
+    assert 0 < abs(close.angular) < abs(far.angular)
+    assert abs(far.angular) <= TrackingParams().turn_speed
+
+
+def test_greenhouse_aisle_cruise_holds_heading_then_switches_to_vision():
+    nav = VisionNavigator(tracking=TrackingParams(aisle_cruise_distance=3.55))
+    red = RedTarget(0.3, 150, 420, 240, 25)
+    first = navstep(nav, scan(3.0), red, (0.0, 0.0, 0.0))
+    assert first.state == 'aisle_cruise' and first.linear > 0
+    correction = navstep(nav, scan(3.0), red, (1.0, 0.15, 0.1))
+    assert correction.state == 'aisle_cruise' and correction.angular < 0
+    finished = navstep(nav, scan(3.0), red, (3.6, 0.0, 0.0))
+    assert nav.aisle_complete and finished.state == ALIGN
+
+
+def test_greenhouse_aisle_stops_when_lidar_unavailable():
+    nav = VisionNavigator(tracking=TrackingParams(aisle_cruise_distance=3.55))
+    result = navstep(nav, [float('nan')]*360,
+                     RedTarget(0.2, 500, 360, 240, 30), (0.0, 0.0, 0.0))
+    assert result.linear == 0 and result.angular == 0

@@ -10,6 +10,7 @@ from serabot_behavior.avoidance import (
 from .red_detection import RedTarget
 
 SEARCH = 'search'
+AISLE = 'aisle_cruise'
 ALIGN = 'align_target'
 APPROACH = 'approach_target'
 AVOID = 'avoid_obstacle'
@@ -36,6 +37,10 @@ class TrackingParams:
     detour_turn_angle: float = 0.40
     detour_forward_distance: float = 0.85
     detour_speed: float = 0.22
+    # Optional mapped-aisle cruise for the known greenhouse demonstration.
+    # Default is disabled for general reactive navigation.
+    aisle_cruise_distance: float = 0.0
+    aisle_cruise_speed: float = 0.28
 
 
 def front_distance(ranges: Sequence[float], angle_min: float, angle_increment: float,
@@ -87,6 +92,12 @@ def free_side(ranges: Sequence[float], angle_min: float, angle_increment: float,
     return 1 if score(left) >= score(right) else -1
 
 
+def alignment_turn(offset: float, max_speed: float) -> float:
+    """Turn proportionally to image error, slowing down near alignment."""
+    magnitude = min(max_speed, max(0.10, abs(offset) * max_speed * 1.7))
+    return -math.copysign(magnitude, offset)
+
+
 def choose_velocity(ranges: Sequence[float], angle_min: float, angle_increment: float,
                     range_min: float, range_max: float, target: Optional[RedTarget],
                     avoidance: AvoidanceParams, tracking: TrackingParams,
@@ -108,7 +119,7 @@ def choose_velocity(ranges: Sequence[float], angle_min: float, angle_increment: 
     close_red = target.width >= tracking.min_stop_target_width
     aligned = abs(target.offset) <= tracking.center_tolerance
     if close_red and not aligned:
-        return Decision(0.0, -math.copysign(tracking.turn_speed, target.offset), ALIGN)
+        return Decision(0.0, alignment_turn(target.offset, tracking.turn_speed), ALIGN)
 
     if aligned and close_red and front <= tracking.stop_distance:
         return Decision(0.0, 0.0, TARGET_STOP)
@@ -127,7 +138,7 @@ def choose_velocity(ranges: Sequence[float], angle_min: float, angle_increment: 
         return Decision(0.0, 0.0, AVOID)
 
     if not aligned:
-        return Decision(0.0, -math.copysign(tracking.turn_speed, target.offset), ALIGN)
+        return Decision(0.0, alignment_turn(target.offset, tracking.turn_speed), ALIGN)
 
     speed = min(tracking.approach_speed,
                 max(0.035, (front - tracking.stop_distance) * 0.28))
@@ -155,6 +166,8 @@ class VisionNavigator:
         self.reached = False
         self.previous_motion = FORWARD
         self.goal_xy: Optional[Tuple[float, float]] = None
+        self.aisle_origin: Optional[Pose] = None
+        self.aisle_complete = False
 
     def remember_target(self, target: Optional[RedTarget], pose: Pose) -> None:
         """Estimate a world-fixed target direction from the camera and odometry.
@@ -214,6 +227,32 @@ class VisionNavigator:
             return STOP_DECISION
 
         self.remember_target(target, pose)
+
+        # In the known greenhouse, follow the free central aisle before
+        # turning toward the red plant. Directly aiming at distant red
+        # crosses the pot rows and causes repeated avoid/align oscillation.
+        # This stage remains LiDAR-guarded and uses odometry for heading.
+        if self.tracking.aisle_cruise_distance > 0 and not self.aisle_complete:
+            if self.aisle_origin is None:
+                self.aisle_origin = pose
+            ox, oy, heading = self.aisle_origin
+            dx, dy = pose[0] - ox, pose[1] - oy
+            progress = dx * math.cos(heading) + dy * math.sin(heading)
+            if progress < self.tracking.aisle_cruise_distance:
+                clear = corridor_distance(ranges, angle_min, angle_increment,
+                                          range_min, range_max)
+                if clear is None:
+                    return STOP_DECISION
+                if clear > self.tracking.obstacle_clearance:
+                    lateral = -dx * math.sin(heading) + dy * math.cos(heading)
+                    yaw_error = normalize_angle(pose[2] - heading)
+                    turn = max(-0.22, min(0.22,
+                                         -1.0 * yaw_error - 0.4 * lateral))
+                    self.mode = AISLE
+                    return Decision(self.tracking.aisle_cruise_speed, turn, AISLE)
+                # An unexpected obstacle in the aisle disables the mapped
+                # leg, falling back to the original safe reactive detours.
+            self.aisle_complete = True
 
         if self.mode == AVOID_TURN:
             assert self.start_pose is not None
