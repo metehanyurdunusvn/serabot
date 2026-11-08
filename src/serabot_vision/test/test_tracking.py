@@ -56,7 +56,7 @@ def test_rotate_toward_right_target():
 
 def test_approach_when_centered_and_clear():
     decision = act(scan(2.0), RedTarget(0.0, 500, 320, 240, 50))
-    assert decision.state == APPROACH and 0 < decision.linear <= 0.12
+    assert decision.state == APPROACH and 0 < decision.linear <= TrackingParams().approach_speed
 
 
 def test_stop_at_safe_distance():
@@ -169,3 +169,24 @@ def test_pot_in_driving_corridor_triggers_avoidance():
     ranges[180 + 20] = 0.55
     target = RedTarget(0.0, 500, 320, 240, 40)
     assert act(ranges, target).state == AVOID
+
+
+def test_high_speed_only_with_clear_front():
+    target = RedTarget(0.0, 1000, 320, 240, 50)
+    far = act(scan(3.0), target)
+    near = act(scan(1.0), target)
+    assert far.state == APPROACH and far.linear == TrackingParams().approach_speed
+    assert near.state == APPROACH and 0 < near.linear < far.linear
+
+
+def test_faster_detour_respects_obstacle_stop():
+    nav = VisionNavigator()
+    red = RedTarget(0.0, 800, 320, 240, 35)
+    first = navstep(nav, scan(0.65), red, (0.0, 0.0, 0.0))
+    assert first.state == AVOID_TURN and first.linear == 0
+    yaw = nav.direction * 0.5
+    drive = navstep(nav, scan(3.0), red, (0.0, 0.0, yaw))
+    assert drive.state == AVOID_DRIVE
+    assert drive.linear == nav.tracking.detour_speed
+    blocked = navstep(nav, scan(0.4), red, (0.1, 0.0, yaw))
+    assert blocked.linear == 0 and blocked.state == AVOID_TURN

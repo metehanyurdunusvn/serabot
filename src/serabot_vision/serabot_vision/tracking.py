@@ -23,8 +23,8 @@ Pose = Tuple[float, float, float]
 @dataclass(frozen=True)
 class TrackingParams:
     stop_distance: float = 0.65
-    approach_speed: float = 0.12
-    turn_speed: float = 0.45
+    approach_speed: float = 0.20
+    turn_speed: float = 0.60
     center_tolerance: float = 0.12
     camera_hfov: float = 1.047
     front_half_angle: float = math.radians(14)
@@ -35,7 +35,7 @@ class TrackingParams:
     min_stop_target_width: int = 115
     detour_turn_angle: float = 0.40
     detour_forward_distance: float = 0.85
-    detour_speed: float = 0.15
+    detour_speed: float = 0.22
 
 
 def front_distance(ranges: Sequence[float], angle_min: float, angle_increment: float,
